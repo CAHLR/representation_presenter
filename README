@@ -1,0 +1,3 @@
+
+python representation_presenter.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path> -g <group_by> -k <token_key> -s <sort_by>
+
