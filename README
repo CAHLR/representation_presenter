@@ -1,3 +1,72 @@
+This tool is to analyze event-log files, such as log data from website,  netflow or somethings like a specific management system. 
+Give an inputfile and some parameters, and you will get a visualization about the dataset.
 
-python representation_presenter.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path> -g <group_by> -k <token_key> -s <sort_by>
+
+SYNOPSIS
+	python representation_presenter.py [options]
+
+
+OPTIONS
+	INPUT AND OUTPUT:
+	-i inputfile_name,input_type
+		type '1': Pre-processing file, train list for word2vec(txt)
+		type '2': Vector file after word2vec with key for token(tsv)
+		type '3': Raw file, event log file(tsv)
+		Default: type '3'
+
+	-o outputfile_name,output_type
+		type '1': Pre-processing file, train list for word2vec(txt)
+		type '2': Vector file after word2vec with key for token(tsv)
+		type '3': 2D Vector file
+		type '4': All three types above
+		Default: type '3'
+
+	There should be no space between file name and file type.
+
+
+	PARAMETERS FOR WORD2VEC
+	-n negative
+   		Negative sampling when using word2vec. Default 10.
+
+	-v vector size
+   		Vector size when using word2vec(size). Default 100.
+
+	-w window size
+		Window size when using word2vec(window). Default 10.
+
+	-c min count
+		Min count number when using word2vec(min_count).
+
+	-e epoch num
+		Iteration times for word2vec. Default 50.
+
+
+	KEYS
+	-g group_by_key
+		Group by. 
+	
+	-s sort_by_by
+		Sort by.
+
+	-t token1,token2,token3...(no space)
+		Tokens for analysis
+
+	-m 3
+		For 3D tsv output file(after t-sne)
+
+
+	OTHERS
+	-t t-sne_path
+   		When using t-sne, choose this command. And there should be files 'fast_t-sne.m' and 'bh_t-sne' in t-sne_path.
+
+   	-dd
+   		If you use this option, duplications won't be removed when generate training list
+
+
+
+Example: Input file are row event log file and output are all files, then use command:
+
+	python/python3 representation_presenter.py -i input.tsv,3 -o n10_vs50_ws2.tsv,4 -g basic_type -s time -k username -t /home/xingzb14/tsne -n 10 -v 50 -c 5 -w 2
+
+
 
