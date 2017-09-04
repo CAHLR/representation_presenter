@@ -171,7 +171,6 @@ def read_big_csv(inputfile):
             chunks.append(chunk)
         except StopIteration:
             loop = False
-            print("Iteration is stopped.")
     df = pd.concat(chunks, ignore_index=True)
     return df
 
@@ -194,7 +193,7 @@ def do_tsne(inputfile, path):
     command += "inputdata = importdata(\'"+inputfile+"\');"
     command += "data = inputdata.data;"
     command += "data = data(2:size(data,1),:);"
-    command += "numDims = "+str(tsne_dim)+"; pcaDims = "+str(pca_dim)+"; perplexity = 20; theta = .5; alg = 'svd';"
+    command += "numDims = "+str(tsne_dim)+"; pcaDims = "+str(pca_dim)+"; perplexity = 16; theta = .5; alg = 'svd';"
     command += "map = fast_tsne(data, numDims, pcaDims, perplexity, theta, alg);"
     command += "csvwrite(\'"+tmpfile+"\',map);"
     os.system('matlab -nodisplay -nosplash -nojvm -r \"'+command+'\"'+'quit;')
@@ -302,7 +301,7 @@ else:
                 frame.columns = new_column 
                 
             if feature == True:
-                feature_frame = pd.read_csv(feature_name, delimiter='\t',low_memory = False)
+                feature_frame = read_big_csv(feature_name, delimiter='\t',low_memory = False)
                 frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
             
             os.system('rm -r '+outputfile)
@@ -337,7 +336,7 @@ else:
             frame.columns = new_column 
                 
         if feature == True:
-            feature_frame = pd.read_csv(feature_name, delimiter='\t',low_memory = False)
+                feature_frame = read_big_csv(feature_name, delimiter='\t',low_memory = False)
             frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
             
         os.system('rm -r '+outputfile)
