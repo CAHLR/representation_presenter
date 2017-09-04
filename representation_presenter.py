@@ -301,7 +301,7 @@ else:
                 frame.columns = new_column 
                 
             if feature == True:
-                feature_frame = read_big_csv(feature_name, delimiter='\t',low_memory = False)
+                feature_frame = read_big_csv(feature_name)
                 frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
             
             os.system('rm -r '+outputfile)
@@ -336,7 +336,7 @@ else:
             frame.columns = new_column 
                 
         if feature == True:
-                feature_frame = read_big_csv(feature_name, delimiter='\t',low_memory = False)
+            feature_frame = read_big_csv(feature_name)
             frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
             
         os.system('rm -r '+outputfile)
