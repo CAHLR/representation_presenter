@@ -109,7 +109,7 @@ for opt, arg in opts:
         sort_key = arg
     if opt in ("-m"):
         tsne_dim = int(arg)
-    if opt in ("-m"):
+    if opt in ("-f"):
         feature = True
         feature_name = arg.split(',')[0]
         merge_type = arg.split(',')[1]
@@ -299,12 +299,12 @@ else:
                 for i in range(3,tsne_dim+1):
                     new_column.append('d'+str(i))
                 frame.columns = new_column 
-                
-            if feature == True:
-                feature_frame = read_big_csv(feature_name)
-                frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
             
+          
+
+
             os.system('rm -r '+outputfile)
+            print(frame.shape)
             frame.to_csv(outputfile, sep = '\t', index = False)
             
     if out_type == 4:
@@ -335,12 +335,17 @@ else:
                 new_column.append('d'+str(i))
             frame.columns = new_column 
                 
-        if feature == True:
-            feature_frame = read_big_csv(feature_name)
-            frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
+        
             
         os.system('rm -r '+outputfile)
         frame.to_csv(outputfile, sep = '\t', index = False)
         
 timeaf = time.time()
 print('TIME: ',timeaf-timebf)
+
+if feature == True:
+    frame = read_big_csv(outputfile)
+    feature_frame = read_big_csv(feature_name)
+    frame = pd.merge(frame,  feature_frame, how = 'left', on = frame.columns[0])
+    frame.to_csv(outputfile, sep = '\t', index = False)
+    
