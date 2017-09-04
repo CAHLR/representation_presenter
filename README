@@ -45,14 +45,14 @@ OPTIONS
 	-g group_by_key
 		Group by. 
 	
-	-s sort_by_by
+	-s sort_by_key
 		Sort by.
 
-	-t token1,token2,token3...(no space)
+	-k token1,token2,token3...(no space)
 		Tokens for analysis
 
-	-m 3
-		For 3D tsv output file(after t-sne)
+	-m dim
+		Dimension of data points in output file(after t-sne)
 
 
 	OTHERS
@@ -62,6 +62,11 @@ OPTIONS
    	-dd
    		If you use this option, duplications won't be removed when generate training list
 
+   	-f featurefile,type
+   	    type determines how to merge feature file and vector file
+   		type 'inner': intersection
+   		type 'left' : save rows in vector file only
+   		type 'right': save rows in feature file only 
 
 
 Example: Input file are row event log file and output are all files, then use command:
