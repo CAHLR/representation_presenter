@@ -27,6 +27,7 @@ pca_dim = 50
 group_key = ''
 # -s sorted by
 sort_key = ''
+feature = False
 # -k token
 token_key = ''
 # dup
@@ -35,9 +36,10 @@ removedup = True
 out_type = 0
 # inputfile data type: 1 for pre-preprocessing file, 2 for vector tsv file, others for raw file
 in_type = 0
+sep = '\t'
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:],'hi:o:e:n:v:w:c:t:lp:d:g:s:k:m:',)
+    opts, args = getopt.getopt(sys.argv[1:],'hi:o:e:n:v:w:c:t:lp:d:g:s:k:m:f:',)
 except getopt.GetoptError:
     print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n')
     sys.exit(2)
@@ -106,11 +108,15 @@ for opt, arg in opts:
     if opt in ("-s"):
         sort_key = arg
     if opt in ("-m"):
-        tsne_dim = 3
-
+        tsne_dim = int(arg)
+    if opt in ("-m"):
+        feature = True
+        feature_name = arg.split(',')[0]
+        merge_type = arg.split(',')[1]
+        
 # Start
-if tsne_dim == 3:
-    output_type = '3D'
+if tsne_dim != 2:
+    output_type = str(tsne_dim)+'D'
     
     
 if in_type == 2 and out_type < 3 or in_type==1 and out_type==1:
@@ -146,7 +152,16 @@ print('Duplication Removal: ',removedup)
 
 def read_big_csv(inputfile):
     import pandas as pd
-    reader = pd.read_csv(inputfile, iterator=True, low_memory = False,delimiter='\t')
+    with open(inputfile,'r') as f:
+        a = f.readline()
+    csvlist = a.split(',')
+    tsvlist = a.split('\t')
+    if len(csvlist)>len(tsvlist):
+        sep = ','
+    else:
+        sep = '\t'
+    print('sep:' , sep)
+    reader = pd.read_csv(inputfile, iterator=True, low_memory = False,delimiter=sep)
     loop = True
     chunkSize = 100000
     chunks = []
@@ -277,10 +292,19 @@ else:
                 frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
                 print('Output type: 2D Vector File')
                 frame.columns = [vec_frame.columns[0], 'x', 'y']
-            if tsne_dim == 3:
-                frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1,2]]],axis=1)
-                print('Output type: 3D Vector File')
-                frame.columns = [vec_frame.columns[0], 'x', 'y', 'z']
+            if tsne_dim != 2:
+                rangelist = list(range(0,tsne_dim))
+                frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[rangelist]],axis=1)
+                print('Output type: '+str(tsne_dim)+'D Vector File')
+                new_column = [vec_frame.columns[0], 'x', 'y']
+                for i in range(3,tsne_dim+1):
+                    new_column.append('d'+str(i))
+                frame.columns = new_column 
+                
+            if feature == True:
+                feature_frame = pd.read_csv(feature_name, delimiter='\t',low_memory = False)
+                frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
+            
             os.system('rm -r '+outputfile)
             frame.to_csv(outputfile, sep = '\t', index = False)
             
@@ -303,10 +327,18 @@ else:
             frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
             print('Output type: 2D Vector File')
             frame.columns = [vec_frame.columns[0], 'x', 'y']
-        if tsne_dim == 3:
-            frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1,2]]],axis=1)
-            print('Output type: 3D Vector File')
-            frame.columns = [vec_frame.columns[0], 'x', 'y', 'z']
+        if tsne_dim != 2:
+            rangelist = list(range(0,tsne_dim))
+            frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[rangelist]],axis=1)
+            print('Output type: '+str(tsne_dim)+'D Vector File')
+            new_column = [vec_frame.columns[0], 'x', 'y']
+            for i in range(3,tsne_dim+1):
+                new_column.append('d'+str(i))
+            frame.columns = new_column 
+                
+        if feature == True:
+            feature_frame = pd.read_csv(feature_name, delimiter='\t',low_memory = False)
+            frame = pd.merge(frame,  feature_frame, how = merge_type, on = vec_frame.columns[0])
             
         os.system('rm -r '+outputfile)
         frame.to_csv(outputfile, sep = '\t', index = False)
