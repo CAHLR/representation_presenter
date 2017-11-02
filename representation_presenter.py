@@ -14,6 +14,7 @@ negative_num = 20
 vec_size = 100
 window_size = 10
 min_count_num = 3
+# currently hardcoding sg=1 (use skip gram)
 Using_tsne = False
 loss_flag = False
 percentage = 0
@@ -176,7 +177,7 @@ def read_big_csv(inputfile):
 
 def train_model(datalist):
     from gensim.models import Word2Vec
-    model = Word2Vec(datalist, negative = negative_num, size = vec_size, window = window_size, min_count = min_count_num, workers = 20, compute_loss = True)
+    model = Word2Vec(datalist, negative = negative_num, size = vec_size, window = window_size, min_count = min_count_num, workers = 20, compute_loss = True, sg=1)
     word_vectors = model.wv
     namelist = word_vectors.index2word
     veclist = word_vectors.syn0.tolist()
