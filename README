@@ -71,7 +71,7 @@ OPTIONS
 
 Example: Input file are row event log file and output are all files, then use command:
 
-	python/python3 representation_presenter.py -i input.tsv,3 -o n10_vs50_ws2.tsv,4 -g basic_type -s time -k username -t /home/xingzb14/tsne -n 10 -v 50 -c 5 -w 2
+	python/python3 representation_presenter.py -i input.tsv,3 -o n10_vs50_ws2.tsv,4 -g basic_type -s time -k username -t /home/xingzb14/tsne -n 10 -v 50 -c 5 -w 2 -e 30
 
 
 
