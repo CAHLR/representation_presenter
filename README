@@ -62,7 +62,7 @@ OPTIONS
    	-dd
    		If you use this option, duplications won't be removed when generate training list
 
-   	-f featurefile,type
+   	-ff featurefile,type
    	    type determines how to merge feature file and vector file
    		type 'inner': intersection
    		type 'left' : save rows in vector file only
