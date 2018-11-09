@@ -25,6 +25,9 @@ OPTIONS
 
 
 	PARAMETERS FOR WORD2VEC
+	-e epoch num
+		Iteration times for word2vec. Default 50.
+
 	-n negative
    		Negative sampling when using word2vec. Default 10.
 
@@ -37,8 +40,6 @@ OPTIONS
 	-c min count
 		Min count number when using word2vec(min_count).
 
-	-e epoch num
-		Iteration times for word2vec. Default 50.
 
 
 	KEYS
@@ -51,11 +52,20 @@ OPTIONS
 	-k token1,token2,token3...(no space)
 		Tokens for analysis
 
+	-f factor1, factor2, factor3...
+	    factors that are attributes of tokens added to the word2vec model (Only when building multifactor-2vec model)
+	    if not none, softmax will be used instead of negative sampling. -n will be set as 0.
+
 	-m dim
 		Dimension of data points in output file(after t-sne)
 
 
 	OTHERS
+
+	-pt if just run word2vec without factors, determine to use either gensim or pytorch
+	    If -f is not none, use pytorch as default
+	    if -f is none, determine which to use, gensim or pytorch
+
 	-t t-sne_path
    		When using t-sne, choose this command. And there should be files 'fast_t-sne.m' and 'bh_t-sne' in t-sne_path.
 
@@ -66,7 +76,9 @@ OPTIONS
    	    type determines how to merge feature file and vector file
    		type 'inner': intersection
    		type 'left' : save rows in vector file only
-   		type 'right': save rows in feature file only 
+   		type 'right': save rows in feature file only
+
+   	-l if calculating val loss
 
 
 Example: Input file are row event log file and output are all files, then use command:
