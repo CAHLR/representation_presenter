@@ -1,6 +1,4 @@
-This tool is to analyze event-log files, such as log data from website,  netflow or somethings like a specific management system. 
-Give an inputfile and some parameters, and you will get a visualization about the dataset.
-
+Tool to learn representations for and visualize interactions from event-log files, such as log data from course clickstream, arbitrary website event logs,  netflows, and other temporal sequences. 
 
 SYNOPSIS
 	python representation_presenter.py [options]
