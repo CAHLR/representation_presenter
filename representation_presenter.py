@@ -21,7 +21,7 @@ batchsize = 128
 # currently hardcoding sg=1 (use skip gram)
 Using_tsne = False
 loss_flag = False
-Using_pytorch = False
+Using_pytorch = True
 percentage = 0
 process_type = 0
 tsne_path = ''
@@ -47,13 +47,13 @@ in_type = 0
 sep = '\t'
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:],'hi:o:e:n:v:w:c:t:lp:d:g:s:k:m:f:ff:pt',)
+    opts, args = getopt.getopt(sys.argv[1:],'hi:o:e:n:v:w:c:t:lp:d:g:s:k:m:r:f:pt',)
 except getopt.GetoptError:
     print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -f <multi-factors> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n')
     sys.exit(2)
 
 for opt, arg in opts:
-    if opt == '-h':
+    if opt == '-h':  # -h: help
         print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -f <multi-factors> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n Attention:\nWhen input type = 1, -k must be set, and output type shouldn\'t be 1\nWhen input type = 2, -t must be set, and output type must be 3\nWhen input type = 3, -k -t -g must be set\nWhen output type = 1, -k -t -g must be set, and input type must be 3\nWhen output type = 2, -k must be set, and input type shouldn\'t be 2\nWhen output type = 3, -t must be set\n')
         sys.exit()
     if opt in ("-i"):
@@ -113,19 +113,21 @@ for opt, arg in opts:
     if opt in ("-k"):
         token_key = arg
         token_list = token_key.split(',')
-    if opt in ("-f"):
+    if opt in ("-r"):
         factor_key = arg
         factor_list = factor_key.split(',')
+        negative_num = 0
+        Using_pytorch = True
+    else:
+        Using_pytorch = False
     if opt in ("-s"):
-        sort_key = arg
+        sort_key = arg  # usually time
     if opt in ("-m"):
         tsne_dim = int(arg)
-    if opt in ("-ff"):
+    if opt in ("-f"):
         feature = True
         feature_name = arg.split(',')[0]
         merge_type = arg.split(',')[1]
-    if opt in ("-pt"):
-        Using_pytorch = True
         
 # Start
 if tsne_dim != 2:
@@ -144,8 +146,6 @@ if token_key == '':
     if in_type != 2 or out_type != 3:
         print('option [-t] must be set\n')
         sys.exit()
-if factor_key != '':
-    Using_pytorch = True
 if sort_key == '':
     if in_type == 3 or out_type == 1:
         print('option [-s] must be set\n')
@@ -158,15 +158,23 @@ if tsne_path == '':
 print(opts)
 print('Input file: '+inputfile)
 print('Input type: '+input_type)
-print('Output file: '+outputfile)
-print('Output type: '+output_type)
+if not Using_pytorch:
+    print('Output file: ' + outputfile)
+    print('Output type: '+output_type)
+else:
+    print('Running Multifactor2vec, automatically generate output files.')
 print('Group by: '+group_key)
 print('Sort  by: '+sort_key)
 print('Token: '+token_key)
+if Using_pytorch:  # multi-factor
+    for i, j in enumerate(factor_list):
+        print('Factor '+str(i)+': '+j)
+
 print('Duplication Removal: ', removedup)
 
 
 def read_big_csv(inputfile):
+
     import pandas as pd
     with open(inputfile,'r') as f:
         a = f.readline()
@@ -204,9 +212,9 @@ def train_model(datalist):
     return vecframe
 
 
-def train_model_torch(datalist):
-    data_sampling.sampling(datalist)
-    return multifactor2vec_torch.train(batchsize, token_list[0], factor_list, vec_size)
+def train_model_torch():
+    data_sampling.sampling(window_size, token_list[0])  # needs uncomment
+    multifactor2vec_torch.train(batchsize, token_list[0], factor_list, vec_size, epoch)
 
 
 def do_tsne(inputfile, path):
@@ -260,33 +268,18 @@ def prepareData(inputfile, sort_key, group_key, token_list):
     return train_list
 
 
-def gene_token_id(data, token):
-    count = data.groupby(token).size()
-    count = pd.core.frame.DataFrame({'count': count}).reset_index()
-    count.sort_values(by=['count'], ascending=False, inplace=True)
-    count.reset_index(inplace=True)
-    count = count.iloc[:, [1, 2]]
-    # get token_id to dictionary
-    dic = count.to_dict('dict')
-    dic1 = dic[token]
-    reversed_dic1 = dict(zip(dic1.values(), dic1.keys()))
-    alldata = {token+'_id': reversed_dic1, 'id_'+token: dic1}
-    f = open(token+'_id.pkl', 'wb')
-    pickle.dump(alldata, f)
-    f.close()
-
-
 def prepareData_torch(inputfile, sort_key, group_key, factor_list, token):  # only support one token
     dataflow = read_big_csv(inputfile)
-    gene_token_id(dataflow, token)
+    seq.set_token_id(dataflow, token)
+    seq.set_sort_key_id(dataflow, sort_key)
     group_key_count = seq.set_group_id(dataflow, group_key)
     sort_key_len = len(dataflow[sort_key].drop_duplicates())
-    if factor_key != '':
+    if factor_key == '':
         # save preprocessed data
         seq.get_seq(dataflow, group_key_count, group_key, token, sort_key, sort_key_len)
     else:
-        for i in factor_list:
-            seq.get_factor(dataflow, token, group_key_count, i, group_key)
+        for i in factor_list:  #!!! need to uncomment
+            seq.get_factor(dataflow, group_key_count, i, group_key, sort_key)
 
         seq.get_factors_seq(dataflow, group_key_count, group_key, token, sort_key, sort_key_len, factor_list)
 
@@ -315,10 +308,10 @@ if __name__ == '__main__':
         else:
             # input file: raw file
             print('Input type: Raw File')
-            if ~Using_pytorch:
-                train_list = prepareData(inputfile, sort_key, group_key, token_list)
+            if Using_pytorch:  # need to uncomment
+                train_list = prepareData_torch(inputfile, sort_key, group_key, factor_list, token_list[0])
             else:
-                train_list = prepareData_torch(inputfile, sort_key, group_key, factor_key, token_list[0])
+                train_list = prepareData(inputfile, sort_key, group_key, token_list)
 
         # train word2vec model
         if out_type == 1:
@@ -330,10 +323,11 @@ if __name__ == '__main__':
             with open(outputfile, 'w') as f:
                 f.write('\n'.join(outlist)+'\n')
         else:
-            if ~Using_pytorch:
-                vec_frame = train_model(train_list)
+            if Using_pytorch:
+                train_model_torch()
+                exit()
             else:
-                vec_frame = train_model_torch(train_list)
+                vec_frame = train_model(train_list)
             head = [token_key]
             head.extend(list(map(str, range(1, vec_size+1))))
             vec_frame = vec_frame.reset_index()
@@ -358,9 +352,6 @@ if __name__ == '__main__':
                     for i in range(3,tsne_dim+1):
                         new_column.append('d'+str(i))
                     frame.columns = new_column
-
-
-
 
                 os.system('rm -r '+outputfile)
                 print(frame.shape)

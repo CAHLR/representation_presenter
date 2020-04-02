@@ -19,7 +19,6 @@ def sampling(window_size, token):
     labels = []
     print('Start sampling')
     for i in range(data.shape[0]):
-        #i = 102742
         print("this is"+str(i))
         a = data[i][data[i] != np.array(None)]
         if a.size==0:
@@ -27,9 +26,7 @@ def sampling(window_size, token):
         seq = np.sum(a)
         couple, label = skipgrams(seq, vocab_size, window_size=window_size, negative_samples=0)
         couples.extend(couple)
-        #print(couples)
         print(len(couples))
-        #print(couples)
         labels.extend(label)
     course_target, course_context = zip(*couples)  # zip(*list[[]]) = unzip to tuple
     print('Finish sampling')
