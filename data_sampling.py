@@ -48,3 +48,4 @@ all_data = {'course_target': course_target, 'course_context': course_context, 'l
 f = open('/home/yueqi/multi_inst_plan/course2vec_suny/course2vec_grade_subject/data/{}/sampled_data_windowsize{}_mincount_{}.pkl'.format(args['institution'], args['window_size'], args['min_count']),'wb')
 pickle.dump(all_data, f)
 f.close()
+
