@@ -4,7 +4,7 @@ NOTE:
 The following data is pseudo data
 The following command uses course subject as one factor to the multi-factor course2vec 
 
-	python representation_presenter -i your_data_path/enrollment_Broome_TERM_SUNY_CSID_feats_multi_c2v_input.csv -g ANON_ID -s t -k TERM_SUNY_CSID -r OSKI_COURSE_SUBJECT_SHORT_NM
+	python representation_presenter.py -i /home/yueqi/multi_inst_plan/suny_preprocess/preprocessed_data/Broome/enrollment_Broome_multi_c2v_input.csv,3 -g OSKI_ANON_ID -s T -k TERM_SUNY_CSID -r OSKI_COURSE_SUBJECT_SHORT_NM
 
 | Stuid  | Semester_year_name_concat | Course_id | Subject_short_name |
 | ------------- | ------------- | ------------- | ------------- |
