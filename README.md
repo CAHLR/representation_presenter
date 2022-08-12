@@ -1,7 +1,7 @@
 ## Updates Aug 2022
 ###### To train suny dataset
 NOTE: the following data is pseudo data
-```python representation_presenter -i your_data_path/enrollment_Broome_TERM_SUNY_CSID_feats_multi_c2v_input.csv -g ANON_ID -s t -k TERM_SUNY_CSID -r OSKI_COURSE_SUBJECT_SHORT_NM```
+	python representation_presenter -i your_data_path/enrollment_Broome_TERM_SUNY_CSID_feats_multi_c2v_input.csv -g ANON_ID -s t -k TERM_SUNY_CSID -r OSKI_COURSE_SUBJECT_SHORT_NM
 
 | Stuid  | Semester_year_name_concat | Course_id | Subject_short_name |
 | ------------- | ------------- | ------------- | ------------- |
