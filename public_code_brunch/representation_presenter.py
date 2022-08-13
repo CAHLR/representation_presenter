@@ -400,4 +400,3 @@ if __name__ == '__main__':
         frame = pd.merge(frame,  feature_frame, how = 'left', on = frame.columns[0])
         frame.to_csv(outputfile, sep = '\t', index = False)
 
-
