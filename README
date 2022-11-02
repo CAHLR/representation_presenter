@@ -74,11 +74,11 @@ Example: Input file are row event log file and output are all files, and train a
 	python3 representation_presenter.py -i enrollment_data_fa17_sp21.csv,3 -o output.tsv,4 -x 2 -g 'student_id' -s 'semester' -k 'course_name'  -e 30
 	
 Example dataset used:
-
+--------------------------------------------------------
 | student_id    | semester      | course_name          |
 | ------------- | ------------- | -------------------  |
 | 664564        | Fall 2024     | Computer Science 61A |
 | 453656        | Spring 2025   | Sociology 1          |
-
+--------------------------------------------------------
 
 
