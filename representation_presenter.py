@@ -6,9 +6,14 @@ import pandas as pd
 import numpy as np
 import gensim
 import random
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+from gensim.models import Word2Vec
+from gensim.models import FastText
 
 time0 = time.time()
 #argument initialization
+# epoch = 50
 epoch = 50
 negative_num = 20
 vec_size = 100
@@ -22,6 +27,8 @@ process_type = 0
 tsne_path = ''
 tsne_dim = 2
 eps = 1e-8
+model_used = 1
+model_choice_dic = {1:'word2vec', 2:'fasttext'}
 pca_dim = 50
 #add new parameter
 # -g grouped by
@@ -39,15 +46,17 @@ out_type = 0
 in_type = 0
 sep = '\t'
 
+
+
 try:
-    opts, args = getopt.getopt(sys.argv[1:],'hi:o:e:n:v:w:c:t:lp:d:g:s:k:m:f:',)
+    opts, args = getopt.getopt(sys.argv[1:],'hi:o:x:e:n:v:w:c:t:lp:d:g:s:k:m:f',)
 except getopt.GetoptError:
-    print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n')
+    print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType>  -x <model_used> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n')
     sys.exit(2)
 
 for opt, arg in opts:
     if opt == '-h':
-        print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n Attention:\nWhen input type = 1, -k must be set, and output type shouldn\'t be 1\nWhen input type = 2, -t must be set, and output type must be 3\nWhen input type = 3, -k -t -g must be set\nWhen output type = 1, -k -t -g must be set, and input type must be 3\nWhen output type = 2, -k must be set, and input type shouldn\'t be 2\nWhen output type = 3, -t must be set\n')
+        print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -x <model_used> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n Attention:\nWhen input type = 1, -k must be set, and output type shouldn\'t be 1\nWhen input type = 2, -t must be set, and output type must be 3\nWhen input type = 3, -k -t -g must be set\nWhen output type = 1, -k -t -g must be set, and input type must be 3\nWhen output type = 2, -k must be set, and input type shouldn\'t be 2\nWhen output type = 3, -t must be set\n')
         sys.exit()
     if opt in ("-i"):
         if len(arg.split(',')) == 1:
@@ -81,6 +90,9 @@ for opt, arg in opts:
             else:
                 output_type = 'All Type'
                 
+    if opt in ("-x"):
+        ## w2v(1) or ft(2)
+        model_used = int(arg)
     if opt in ("-e"):
         epoch = int(arg)
     if opt in ("-n"):
@@ -114,7 +126,7 @@ for opt, arg in opts:
         feature = True
         feature_name = arg.split(',')[0]
         merge_type = arg.split(',')[1]
-        
+    
 # Start
 if tsne_dim != 2:
     output_type = str(tsne_dim)+'D'
@@ -128,19 +140,13 @@ if group_key == '':
     if in_type == 3 or out_type == 1:
         print('option [-g] must be set\n')
         sys.exit()
-if token_key == '':
-    if in_type != 2 or out_type != 3:
-        print('option [-t] must be set\n')
-        sys.exit()
+
 if sort_key == '':
     if in_type == 3 or out_type == 1:
         print('option [-s] must be set\n')
         sys.exit()
-if tsne_path == '':
-    if in_type == 2 or out_type == 3:
-        print('option [-t] must be set\n')
-        sys.exit()
-        
+
+
 print(opts)
 print('Input file: '+inputfile)
 print('Input type: '+input_type)
@@ -149,6 +155,7 @@ print('Output type: '+output_type)
 print('Group by: '+group_key)
 print('Sort  by: '+sort_key)
 print('Token: '+token_key)
+print('Model: '+model_choice_dic[model_used])
 print('Duplication Removal: ',removedup)
 
 def read_big_csv(inputfile):
@@ -176,11 +183,22 @@ def read_big_csv(inputfile):
     return df
 
 def train_model(datalist):
-    from gensim.models import Word2Vec
-    model = Word2Vec(datalist, negative = negative_num, size = vec_size, window = window_size, min_count = min_count_num, workers = 20, compute_loss = True, sg=1, iter = epoch)
+    
+    if model_used == 1:
+        print('training Word2Vec')
+        model = Word2Vec( negative = negative_num, vector_size = vec_size, window = window_size, min_count = min_count_num, workers = 20, sg=1)
+    else:
+        print('training FastText')
+        model = FastText( negative = negative_num, vector_size = vec_size, window = window_size, min_count = min_count_num, workers = 20, sg=1)
+    
+    model.build_vocab(datalist, progress_per=10000 )
+    model.train(datalist, total_examples=len(datalist), epochs=epoch,compute_loss=True)
+    
     word_vectors = model.wv
-    namelist = word_vectors.index2word
-    veclist = word_vectors.syn0.tolist()
+
+    namelist = word_vectors.index_to_key
+
+    veclist = word_vectors.vectors.tolist()
     print('Effective Vectors: ', len(namelist))
     vecframe = pd.DataFrame(veclist,index=namelist)
     print('Model training process completed')
@@ -188,19 +206,7 @@ def train_model(datalist):
     return vecframe
 
 
-def do_tsne(inputfile, path):
-    tmpfile = inputfile+'tmp.csv'
-    command = "addpath(\'"+tsne_path+"\');"
-    command += "inputdata = importdata(\'"+inputfile+"\');"
-    command += "data = inputdata.data;"
-    command += "data = data(2:size(data,1),:);"
-    command += "numDims = "+str(tsne_dim)+"; pcaDims = "+str(pca_dim)+"; perplexity = 16; theta = .5; alg = 'svd';"
-    command += "map = fast_tsne(data, numDims, pcaDims, perplexity, theta, alg);"
-    command += "csvwrite(\'"+tmpfile+"\',map);"
-    os.system('matlab -nodisplay -nosplash -nojvm -r \"'+command+'\"'+'quit;')
-    outputframe = pd.read_csv(tmpfile, header = None)
-    os.system('rm -r '+tmpfile)
-    return outputframe
+
 
 
 def norep(datalist):
@@ -239,7 +245,15 @@ def prepareData(inputfile, sort_key, group_key, token_list):
     return train_list
 
 
-
+def get_tsne_df(vec_frame, tsne_dim):
+    array_embs = vec_frame.iloc[:,1:].values
+    tsne = TSNE(random_state=1, n_components=tsne_dim, metric="cosine")
+    frame= pd.DataFrame(tsne.fit_transform(array_embs))
+    frame[vec_frame.columns[0]] = vec_frame.iloc[:,0]
+    cols = list(frame.columns)
+    cols = [cols[-1]] + cols[:-1]
+    frame = frame[cols]
+    return frame
 # main
 
 timebf = time.time()
@@ -248,10 +262,10 @@ if in_type == 2:
     print('Input type: Vector File')
     print('Output type: 2D Vector File')
     vec_frame = read_big_csv(inputfile)
-    frame = do_tsne(inputfile, tsne_path)
-    frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-    frame.columns = [vec_frame.columns[0], 'x', 'y']
-    frame.to_csv(outputfile, sep = '\t', index = False)
+    
+    frame = get_tsne_df(vec_frame,2)
+    print('Output type: ', tsne_dim, 'D Vector File')
+
 else:
     if in_type == 1:
         # input type: corpus for training
@@ -280,66 +294,30 @@ else:
         head.extend(list(map(str,range(1,vec_size+1))))
         vec_frame = vec_frame.reset_index()
         vec_frame.columns = head
+        
         if out_type == 2:
             # save vector file for outputfile(.tsv)
             print('Output type: Vector File')
             vec_frame.to_csv(outputfile, sep='\t', index=False)
+        
         elif out_type == 3:
-            # save 2 dims tsv file
-            vec_frame.to_csv(outputfile, sep='\t', index=False)
-            frame = do_tsne(outputfile, tsne_path)
-            if tsne_dim == 2:
-                frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-                print('Output type: 2D Vector File')
-                frame.columns = [vec_frame.columns[0], 'x', 'y']
-            if tsne_dim != 2:
-                rangelist = list(range(0,tsne_dim))
-                frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[rangelist]],axis=1)
-                print('Output type: '+str(tsne_dim)+'D Vector File')
-                new_column = [vec_frame.columns[0], 'x', 'y']
-                for i in range(3,tsne_dim+1):
-                    new_column.append('d'+str(i))
-                frame.columns = new_column 
-            
-          
-
-
-            os.system('rm -r '+outputfile)
+            frame = get_tsne_df(vec_frame,tsne_dim)
+            print('Output type: ', tsne_dim, 'D Vector File')
             print(frame.shape)
-            frame.to_csv(outputfile, sep = '\t', index = False)
+            new_outputfile_name = outputfile.replace('.tsv', '') + '_tsne_dim_' + str(tsne_dim) + '.tsv'
+            frame.to_csv(new_outputfile_name, sep = '\t', index = False)
             
     if out_type == 4:
-        outlist = []
-        for line in train_list:
-            outlist.append(' '.join(line))
-        with open('PP-'+outputfile, 'w') as f:
-            f.write('\n'.join(outlist)+'\n')
-        vec_frame = train_model(train_list)
-        head = [token_key]
-        head.extend(list(map(str,range(1,vec_size+1))))
-        vec_frame = vec_frame.reset_index()
-        vec_frame.columns = head
-        # save vector file for outputfile(.tsv)
-        vec_frame.to_csv('VS-'+outputfile, sep='\t', index=False)
-        frame = do_tsne('VS-'+outputfile, tsne_path)
-        frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-        if tsne_dim == 2:
-            frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-            print('Output type: 2D Vector File')
-            frame.columns = [vec_frame.columns[0], 'x', 'y']
-        if tsne_dim != 2:
-            rangelist = list(range(0,tsne_dim))
-            frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[rangelist]],axis=1)
-            print('Output type: '+str(tsne_dim)+'D Vector File')
-            new_column = [vec_frame.columns[0], 'x', 'y']
-            for i in range(3,tsne_dim+1):
-                new_column.append('d'+str(i))
-            frame.columns = new_column 
-                
+        frame = get_tsne_df(vec_frame,tsne_dim)
         
-            
-        os.system('rm -r '+outputfile)
-        frame.to_csv(outputfile, sep = '\t', index = False)
+        print('Output type: ', tsne_dim, 'D Vector File')
+        print(frame.shape)
+        new_outputfile_name = outputfile.replace('.tsv', '') + '_tsne_dim_' + str(tsne_dim)+ '.tsv'
+        frame.to_csv(new_outputfile_name, sep = '\t', index = False)
+        
+        print('Output type: full vector File')
+        vec_frame.to_csv(outputfile, sep='\t', index=False)
+
         
 timeaf = time.time()
 print('TIME: ',timeaf-timebf)
