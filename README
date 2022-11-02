@@ -75,10 +75,10 @@ Example: Input file are row event log file and output are all files, and train a
 	
 Example dataset used:
 
-| student_id  | semester | course_name |
-| ------------- | ------------- | ------------- |
-| 664564  | Fall 2024  | 32541 | Computer Science 61A |
-| 453656  | Spring 2025  | 56423 | Sociology 1 |
+| student_id    | semester      | course_name          |
+| ------------- | ------------- | -------------------  |
+| 664564        | Fall 2024     | Computer Science 61A |
+| 453656        | Spring 2025   | Sociology 1          |
 
 
 
