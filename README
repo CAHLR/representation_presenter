@@ -20,9 +20,13 @@ OPTIONS
 		Default: type '3'
 
 	There should be no space between file name and file type.
+	
+	MODEL TYPE:
+	-x model used
+		1: Word2Vec
+		2: Fasttext
 
-
-	PARAMETERS FOR WORD2VEC
+	PARAMETERS FOR WORD2VEC AND FASTTEXT:
 	-n negative
    		Negative sampling when using word2vec. Default 10.
 
@@ -54,8 +58,6 @@ OPTIONS
 
 
 	OTHERS
-	-t t-sne_path
-   		When using t-sne, choose this command. And there should be files 'fast_t-sne.m' and 'bh_t-sne' in t-sne_path.
 
    	-dd
    		If you use this option, duplications won't be removed when generate training list
@@ -67,9 +69,9 @@ OPTIONS
    		type 'right': save rows in feature file only 
 
 
-Example: Input file are row event log file and output are all files, then use command:
+Example: Input file are row event log file and output are all files, and train a fasttext model, then use command:
 
-	python/python3 representation_presenter.py -i input.tsv,3 -o n10_vs50_ws2.tsv,4 -g basic_type -s time -k username -t /home/xingzb14/tsne -n 10 -v 50 -c 5 -w 2 -e 30
+	python3 representation_presenter.py -i enrollment_data_fa17_sp21.csv,3 -o output.tsv,4 -x 2 -g 'student_id' -s 'semester' -k 'course_name'  -e 30
 
 
 
