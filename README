@@ -77,8 +77,8 @@ Example dataset used:
 --------------------------------------------------------
 | student_id    | semester      | course_name          |
 | ------------- | ------------- | -------------------  |
-| 664564        | Fall 2024     | Computer Science 61A |
-| 453656        | Spring 2025   | Sociology 1          |
+| 664564        | Fall 2017     | Computer Science 61A |
+| 453656        | Spring 2020   | Sociology 1          |
 --------------------------------------------------------
 
 
