@@ -23,7 +23,7 @@ OPTIONS
 	
 	MODEL TYPE:
 	-x model used
-		1: Word2Vec
+		1: Word2Vec (default if x not defined)
 		2: Fasttext
 
 	PARAMETERS FOR WORD2VEC AND FASTTEXT:
