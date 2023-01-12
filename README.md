@@ -94,7 +94,6 @@ Example course2vec (FastText):
 Example multifactor-course2vec:
 - using "department" as a factor
 - train for 5 epochs
-
 	
 	python3 representation_presenter.py -i enrollment_data.csv,3 -g  'student_id' -s  'semester' -k 'course_name'  -z '1' -e '5' -r 'department'
 
