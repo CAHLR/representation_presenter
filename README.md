@@ -72,9 +72,6 @@ Give an inputfile and some parameters, and you will get embeddings representing 
 
 	OTHERS  (No need to define when using multifactor2vec)
 
-	-t t-sne_path
-   		When using t-sne, choose this command. And there should be files 'fast_t-sne.m' and 'bh_t-sne' in t-sne_path.
-
    	-dd
    		If you use this option, duplications won't be removed when generate training list
 
