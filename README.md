@@ -1,11 +1,11 @@
 This tool is to analyze event-log files, such as log data from website,  netflow or somethings like a specific management system. 
 Give an inputfile and some parameters, and you will get embeddings representing the dataset.
 
-###SYNOPSIS
+### SYNOPSIS
 	python representation_presenter.py [options]
 
 
-###OPTIONS
+### OPTIONS
 	INPUT AND OUTPUT:
 	-i inputfile_name,input_type (if using multifactor2vec, must choose 3 and provide tsv file)
 		type '1': Pre-processing file, train list for word2vec(txt)
@@ -85,7 +85,7 @@ Give an inputfile and some parameters, and you will get embeddings representing 
 
    	-l if calculating val loss
 	
-###Examples
+### Examples
 
 Example course2vec (FastText):
 	python3 representation_presenter.py -i enrollment_data.csv,3 -o outputft.tsv,2  -g  'student_id' -s  'semester' -k 'course_name'  -z '0' -x '2' 
@@ -106,7 +106,7 @@ enrollment_data.csv
 ---------------------------------------------------------------------------
 
 
-###Notes
+### Notes
 Notes for using word2vec and fasttext:
 1. Need to provide the output file and output type.
 
