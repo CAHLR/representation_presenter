@@ -1,7 +1,6 @@
 This tool is to analyze event-log files, such as log data from website,  netflow or somethings like a specific management system. 
 Give an inputfile and some parameters, and you will get embeddings representing the dataset.
 
-
 ###SYNOPSIS
 	python representation_presenter.py [options]
 
