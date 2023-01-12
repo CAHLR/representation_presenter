@@ -221,6 +221,7 @@ def read_big_csv(inputfile):
 
 
 def train_model(datalist):
+<<<<<<< HEAD
     if c2v_model == 1:
         print('training Word2Vec')
         model = Word2Vec( negative = negative_num, vector_size = vec_size, window = window_size, min_count = min_count_num, workers = 20, sg=1)
@@ -231,6 +232,10 @@ def train_model(datalist):
     model.build_vocab(datalist, progress_per=10000 )
     model.train(datalist, total_examples=len(datalist), epochs=epoch,compute_loss=True)
     
+=======
+    from gensim.models import Word2Vec
+    model = Word2Vec(datalist, negative = negative_num, size = vec_size, window = window_size, min_count = min_count_num, workers = 20, compute_loss = True, sg=1, iter = epoch)
+>>>>>>> master
     word_vectors = model.wv
 
     namelist = word_vectors.index_to_key
