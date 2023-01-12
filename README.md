@@ -24,12 +24,13 @@ Give an inputfile and some parameters, and you will get embeddings representing 
 	
 	
 	MODELS TYPE:
+	-z Using_pytorch:
+		1: use Pytorch, train a multi-c2v model
+		0: don't use Pytorch, train a course2vec (specify Word2Vec or FastText model)
 	-x course2vec model used
 		1: Word2Vec (default if x not defined)
 		2: FastText
-	-z Using_pytorch:
-		1: use Pytorch, train a multi-c2v model
-		0: don't use Pytorch, train a course2vec (Word2Vec or FastText model)
+	
 	
 
 
