@@ -23,7 +23,7 @@ Give an inputfile and some parameters, and you will get embeddings representing 
 	There should be no space between file name and file type.
 	
 	
-	MODELS TYPE:
+	MODEL TYPE:
 	-z Using_pytorch:
 		1: use Pytorch, train a multi-c2v model
 		0: don't use Pytorch, train a course2vec (specify Word2Vec or FastText model)
