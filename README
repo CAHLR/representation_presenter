@@ -1,5 +1,5 @@
 This tool is to analyze event-log files, such as log data from website,  netflow or somethings like a specific management system. 
-Give an inputfile and some parameters, and you will get a visualization about the dataset.
+Give an inputfile and some parameters, and you will get embeddings representing the dataset.
 
 
 SYNOPSIS
@@ -22,6 +22,16 @@ OPTIONS
 		Default: type '3'
 
 	There should be no space between file name and file type.
+	
+	
+	MODELS TYPE:
+	-x course2vec model used
+		1: Word2Vec (default if x not defined)
+		2: FastText
+	-z Using_pytorch:
+		1: use Pytorch, train a multi-c2v model
+		0: don't use Pytorch, train a course2vec (Word2Vec or FastText model)
+	
 
 
 	PARAMETERS FOR WORD2VEC
@@ -76,17 +86,28 @@ OPTIONS
 
    	-l if calculating val loss
 
+Example course2vec (FastText):
+	python3 representation_presenter.py -i enrollment_data.csv,3 -o outputft.tsv,2  -g  'student_id' -s  'semester' -k 'course_name'  -z '0' -x '2' 
 
-Example course2vec: Input file are row event log file and output are all files, then use command:
+Example multifactor-course2vec:
+- using "department" as a factor
+- train for 5 epochs
 
-	python/python3 representation_presenter.py -i input.tsv,3 -o n10_vs50_ws2.tsv,4 -g basic_type -s time -k username -t /home/xingzb14/tsne -n 10 -v 50 -c 5 -w 2
+	python3 representation_presenter.py -i enrollment_data.csv,3 -g  'student_id' -s  '#semester' -k 'course_name'  -z '1' -e '5' -r 'department'
 
-Example multifactor-course2vec: Input file are row event log file and output are all files, then use command:
+Example dataset used:
+enrollment_data.csv
+---------------------------------------------------------------------------
+| student_id    | semester      | course_name          | department       |
+| ------------- | ------------- | -------------------  |-------------------
+| 664564        | Fall 2017     | Computer Science 61A |Computer Science  |
+| 453656        | Spring 2020   | Sociology 1          |Sociology         |
+---------------------------------------------------------------------------
 
-     python/python3 representation_presenter.py -i input.tsv,3 -g basic_type -s time -k token_name -r "factor1, factor2..."
 
-    (e.g., python/python3 representation_presenter.py -i data_sample.tsv,3 -g ' Student Identifier(ppsk)' -s 'Semester Year Name Concat' -k 'Num_subject' -r "Instructor Name,Course Subject Short Nm")
 
+Notes for using word2vec and fasttext:
+1. Need to provide the output file and output type.
 
 Notes for using multifactor2vec: (pytorch model will be used)
 1. The "time column" in the input data should be numerically sortable.
