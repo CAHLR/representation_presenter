@@ -1,6 +1,6 @@
 _author__ = 'jwj'
-from keras.preprocessing.sequence import skipgrams
-from keras.preprocessing import sequence
+from tensorflow.keras.preprocessing.sequence import skipgrams
+# from keras.preprocessing import sequence
 import numpy as np
 import pickle
 

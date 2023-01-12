@@ -34,7 +34,7 @@ def generate_batch_data_random(x, y, batch_size, indim):
     context = list(context_course)[0]
     return target, context
 
-
+loss_ls = []
 def train_mini_batch(word_target, word_context, batch_s, optimizer, model, loss_fn, iter, indim, epoch):
     for t in range(epoch):  # epoch
         for i in range(iter):
@@ -49,9 +49,12 @@ def train_mini_batch(word_target, word_context, batch_s, optimizer, model, loss_
             y_pred = model(target).cuda()
             loss = loss_fn(y_pred, context)
             loss_fn.cuda()
-            print('epoch' + str(t+1)+':' + 'The'+str(i+1)+'-th interation: training loss'+str(loss.data[0])+'\n')
+            loss_ls.append('epoch' + str(t+1)+':' + 'The'+str(i+1)+'-th interation: training loss'+str(loss.item()))
+            print('epoch' + str(t+1)+':' + 'The'+str(i+1)+'-th interation: training loss'+str(loss.data.item())+'\n')
             loss.backward()
             optimizer.step()
+    with open('./log_windowsize_10_mincount_5_embs_300.pkl', 'wb') as f:
+        pickle.dump(loss_ls, f)
 
 
 def train(batch_s, token, factors, vec_dim, epoch):
@@ -115,4 +118,3 @@ def train(batch_s, token, factors, vec_dim, epoch):
         factor_weight_df.columns = ['id', 'weight']
         factor_tsv = pd.merge(factor_id_df, factor_weight_df, on='id')
         factor_tsv.to_csv(i + '_embeddings.tsv', sep='\t')
-

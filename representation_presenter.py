@@ -5,8 +5,12 @@ import time
 import pandas as pd
 import pickle
 import sequence_serialization as seq
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 import multifactor2vec_torch
 import data_sampling
+from gensim.models import Word2Vec
+from gensim.models import FastText
 import numpy as np
 
 
@@ -17,11 +21,18 @@ negative_num = 20
 vec_size = 300
 window_size = 10
 min_count_num = 3
-batchsize = 128
+# batchsize = 128
+# batchsize = 32768
+batchsize = 20000
 # currently hardcoding sg=1 (use skip gram)
 Using_tsne = False
 loss_flag = False
-Using_pytorch = True
+Using_pytorch = 1 ## 1 is true, 0 is false
+c2v_model=1
+##default to 1 (word2vec)
+## 2 is fasttext
+c2v_model_choice_dic={1:'word2vec', 2:'fasttext'}
+
 percentage = 0
 process_type = 0
 tsne_path = ''
@@ -47,14 +58,14 @@ in_type = 0
 sep = '\t'
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:],'hi:o:e:n:v:w:c:t:lp:d:g:s:k:m:r:f:pt',)
+    opts, args = getopt.getopt(sys.argv[1:],'hi:o:z:x:e:n:v:w:c:t:lp:d:g:s:k:m:r:f:pt',)
 except getopt.GetoptError:
-    print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -f <multi-factors> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n')
+    print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -z <Using_pytorch> -x <c2v_model> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -f <multi-factors> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n')
     sys.exit(2)
 
 for opt, arg in opts:
     if opt == '-h':  # -h: help
-        print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -f <multi-factors> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n Attention:\nWhen input type = 1, -k must be set, and output type shouldn\'t be 1\nWhen input type = 2, -t must be set, and output type must be 3\nWhen input type = 3, -k -t -g must be set\nWhen output type = 1, -k -t -g must be set, and input type must be 3\nWhen output type = 2, -k must be set, and input type shouldn\'t be 2\nWhen output type = 3, -t must be set\n')
+        print('\nxxx.py -i <inputfile,inputType> -o <outputfile,outputType> -z <Using_pytorch> -x <c2v_model> -e <epoch num> -n <negative> -v <vector size> -w <window size> -c <min count> -f <multi-factors> -t <tsne_path>  -l (if calculating val loss) -g <group_by> -k <token_key> -s <sort_by> \nDefault parameter: epoch=50, negative=10, vector size=100, window size=10, min count=5\n Attention:\nWhen input type = 1, -k must be set, and output type shouldn\'t be 1\nWhen input type = 2, -t must be set, and output type must be 3\nWhen input type = 3, -k -t -g must be set\nWhen output type = 1, -k -t -g must be set, and input type must be 3\nWhen output type = 2, -k must be set, and input type shouldn\'t be 2\nWhen output type = 3, -t must be set\n')
         sys.exit()
     if opt in ("-i"):
         if len(arg.split(',')) == 1:
@@ -90,6 +101,15 @@ for opt, arg in opts:
                 
     if opt in ("-e"):
         epoch = int(arg)
+        
+    if opt in ("-x"):
+        ## w2v(1) or ft(2)
+        c2v_model = int(arg)
+    
+    if opt in ("-z"):
+        ## use pytorch(1) or don't use pytorch(0)
+        Using_pytorch = int(arg)
+        
     if opt in ("-n"):
         negative_num = int(arg)
     if opt in ("-v"):
@@ -150,10 +170,10 @@ if sort_key == '':
     if in_type == 3 or out_type == 1:
         print('option [-s] must be set\n')
         sys.exit()
-if tsne_path == '':
-    if in_type == 2 or out_type == 3:
-        print('option [-t] must be set\n')
-        sys.exit()
+# if tsne_path == '':
+#     if in_type == 2 or out_type == 3:
+#         print('option [-t] must be set\n')
+#         sys.exit()
         
 print(opts)
 print('Input file: '+inputfile)
@@ -161,6 +181,7 @@ print('Input type: '+input_type)
 if not Using_pytorch:
     print('Output file: ' + outputfile)
     print('Output type: '+output_type)
+    print('Course2Vec Model: '+c2v_model_choice_dic[c2v_model])
 else:
     print('Running Multifactor2vec, automatically generate output files.')
 print('Group by: '+group_key)
@@ -200,16 +221,27 @@ def read_big_csv(inputfile):
 
 
 def train_model(datalist):
-    from gensim.models import Word2Vec
-    model = Word2Vec(datalist, negative=negative_num, size=vec_size, window=window_size, min_count=min_count_num, workers=20, compute_loss=True, sg=1)
+    if c2v_model == 1:
+        print('training Word2Vec')
+        model = Word2Vec( negative = negative_num, vector_size = vec_size, window = window_size, min_count = min_count_num, workers = 20, sg=1)
+    else:
+        print('training FastText')
+        model = FastText( negative = negative_num, vector_size = vec_size, window = window_size, min_count = min_count_num, workers = 20, sg=1)
+    
+    model.build_vocab(datalist, progress_per=10000 )
+    model.train(datalist, total_examples=len(datalist), epochs=epoch,compute_loss=True)
+    
     word_vectors = model.wv
-    namelist = word_vectors.index2word
-    veclist = word_vectors.syn0.tolist()
+
+    namelist = word_vectors.index_to_key
+
+    veclist = word_vectors.vectors.tolist()
     print('Effective Vectors: ', len(namelist))
-    vecframe = pd.DataFrame(veclist, index=namelist)
+    vecframe = pd.DataFrame(veclist,index=namelist)
     print('Model training process completed')
-    print('Training loss', model.running_training_loss)
+    print('Training loss',model.running_training_loss)
     return vecframe
+
 
 
 def train_model_torch():
@@ -283,6 +315,15 @@ def prepareData_torch(inputfile, sort_key, group_key, factor_list, token):  # on
 
         seq.get_factors_seq(dataflow, group_key_count, group_key, token, sort_key, sort_key_len, factor_list)
 
+def get_tsne_df(vec_frame, tsne_dim):
+    array_embs = vec_frame.iloc[:,1:].values
+    tsne = TSNE(random_state=1, n_components=tsne_dim, metric="cosine")
+    frame= pd.DataFrame(tsne.fit_transform(array_embs))
+    frame[vec_frame.columns[0]] = vec_frame.iloc[:,0]
+    cols = list(frame.columns)
+    cols = [cols[-1]] + cols[:-1]
+    frame = frame[cols]
+    return frame
 
 if __name__ == '__main__':
 
@@ -292,10 +333,9 @@ if __name__ == '__main__':
         print('Input type: Vector File')
         print('Output type: 2D Vector File')
         vec_frame = read_big_csv(inputfile)
-        frame = do_tsne(inputfile, tsne_path)
-        frame = pd.concat([vec_frame[[vec_frame.columns[0]]], frame[[0, 1]]], axis=1)
-        frame.columns = [vec_frame.columns[0], 'x', 'y']
-        frame.to_csv(outputfile, sep='\t', index=False)
+    
+        frame = get_tsne_df(vec_frame,2)
+
     else:
         if in_type == 1:
             # input type: corpus for training
@@ -332,63 +372,34 @@ if __name__ == '__main__':
             head.extend(list(map(str, range(1, vec_size+1))))
             vec_frame = vec_frame.reset_index()
             vec_frame.columns = head
+            
             if out_type == 2:
                 # save vector file for outputfile(.tsv)
                 print('Output type: Vector File')
                 vec_frame.to_csv(outputfile, sep='\t', index=False)
             elif out_type == 3:
-                # save 2 dims tsv file
-                vec_frame.to_csv(outputfile, sep='\t', index=False)
-                frame = do_tsne(outputfile, tsne_path)
-                if tsne_dim == 2:
-                    frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-                    print('Output type: 2D Vector File')
-                    frame.columns = [vec_frame.columns[0], 'x', 'y']
-                if tsne_dim != 2:
-                    rangelist = list(range(0,tsne_dim))
-                    frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[rangelist]],axis=1)
-                    print('Output type: '+str(tsne_dim)+'D Vector File')
-                    new_column = [vec_frame.columns[0], 'x', 'y']
-                    for i in range(3,tsne_dim+1):
-                        new_column.append('d'+str(i))
-                    frame.columns = new_column
-
-                os.system('rm -r '+outputfile)
+                frame = get_tsne_df(vec_frame,tsne_dim)
+                print('Output type: ', tsne_dim, 'D Vector File')
                 print(frame.shape)
-                frame.to_csv(outputfile, sep = '\t', index = False)
+                new_outputfile_name = outputfile.replace('.tsv', '') + '_tsne_dim_' + str(tsne_dim) + '.tsv'
+                frame.to_csv(new_outputfile_name, sep = '\t', index = False)
+
+
 
         if out_type == 4:
-            outlist = []
-            for line in train_list:
-                outlist.append(' '.join(line))
-            with open('PP-'+outputfile, 'w') as f:
-                f.write('\n'.join(outlist)+'\n')
-            vec_frame = train_model(train_list)
-            head = [token_key]
-            head.extend(list(map(str,range(1,vec_size+1))))
-            vec_frame = vec_frame.reset_index()
-            vec_frame.columns = head
-            # save vector file for outputfile(.tsv)
-            vec_frame.to_csv('VS-'+outputfile, sep='\t', index=False)
-            frame = do_tsne('VS-'+outputfile, tsne_path)
-            frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-            if tsne_dim == 2:
-                frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[[0,1]]],axis=1)
-                print('Output type: 2D Vector File')
-                frame.columns = [vec_frame.columns[0], 'x', 'y']
-            if tsne_dim != 2:
-                rangelist = list(range(0,tsne_dim))
-                frame = pd.concat([vec_frame[[vec_frame.columns[0]]],frame[rangelist]],axis=1)
-                print('Output type: '+str(tsne_dim)+'D Vector File')
-                new_column = [vec_frame.columns[0], 'x', 'y']
-                for i in range(3,tsne_dim+1):
-                    new_column.append('d'+str(i))
-                frame.columns = new_column
+        
+            frame = get_tsne_df(vec_frame,tsne_dim)
+
+            print('Output type: ', tsne_dim, 'D Vector File')
+            print(frame.shape)
+            new_outputfile_name = outputfile.replace('.tsv', '') + '_tsne_dim_' + str(tsne_dim)+ '.tsv'
+            frame.to_csv(new_outputfile_name, sep = '\t', index = False)
+
+            print('Output type: full vector File')
+            vec_frame.to_csv(outputfile, sep='\t', index=False)
 
 
 
-            os.system('rm -r '+outputfile)
-            frame.to_csv(outputfile, sep = '\t', index = False)
 
     timeaf = time.time()
     print('TIME: ',timeaf-timebf)
@@ -398,4 +409,3 @@ if __name__ == '__main__':
         feature_frame = read_big_csv(feature_name)
         frame = pd.merge(frame,  feature_frame, how = 'left', on = frame.columns[0])
         frame.to_csv(outputfile, sep = '\t', index = False)
-
